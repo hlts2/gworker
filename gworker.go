@@ -68,7 +68,6 @@ func (d *Dispatcher) Add(job func() error) {
 	d.jobs <- job
 }
 
-// StartJobObserver ...
 func (d *Dispatcher) StartJobObserver() {
 	go func() {
 		for {
@@ -81,7 +80,6 @@ func (d *Dispatcher) StartJobObserver() {
 	}()
 }
 
-// UpScale ...
 func (d *Dispatcher) UpScale(workerCount int) {
 	if workerCount < 1 {
 		workerCount = defaultWorkerCount
@@ -100,7 +98,7 @@ func (d *Dispatcher) UpScale(workerCount int) {
 	}
 }
 
-// JobError returns job error on channel
+// JobError returns channel for job error
 func (d *Dispatcher) JobError() <-chan error {
 	return d.joberr
 }
