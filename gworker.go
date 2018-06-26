@@ -10,7 +10,7 @@ const (
 )
 
 type (
-	// Dispatcher ...
+	// Dispatcher managements worker
 	Dispatcher struct {
 		wg          *sync.WaitGroup
 		mu          *sync.Mutex
@@ -38,7 +38,7 @@ func NewDispatcher(workerCount int) *Dispatcher {
 		workers:     make([]*worker, workerCount),
 		workerCount: workerCount,
 		jobs:        make(chan func() error, maxJobCount),
-		joberr:      make(chan error, 1),
+		joberr:      make(chan error, maxJobCount),
 		finish:      make(chan struct{}, 1),
 	}
 
@@ -68,6 +68,7 @@ func (d *Dispatcher) Add(job func() error) {
 	d.jobs <- job
 }
 
+// StartJobObserver monitors jobs. Then, when all the jobs are completed, the notification is transmitted
 func (d *Dispatcher) StartJobObserver() {
 	go func() {
 		for {
@@ -80,6 +81,7 @@ func (d *Dispatcher) StartJobObserver() {
 	}()
 }
 
+// UpScale scales up the numer of worker
 func (d *Dispatcher) UpScale(workerCount int) {
 	if workerCount < 1 {
 		workerCount = defaultWorkerCount
