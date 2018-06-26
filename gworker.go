@@ -72,7 +72,7 @@ func (d *Dispatcher) Add(job func() error) {
 func (d *Dispatcher) StartJobObserver() {
 	go func() {
 		for {
-			if len(d.jobs) > 1 {
+			if len(d.jobs) > 0 {
 				d.wg.Wait()
 				d.finish <- struct{}{}
 				return
