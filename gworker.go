@@ -16,6 +16,7 @@ type (
 		mu          *sync.Mutex
 		workers     []*worker
 		workerCount int
+		runnig      bool
 		jobs        chan func() error
 		joberr      chan error
 		finish      chan struct{}
@@ -23,6 +24,7 @@ type (
 
 	worker struct {
 		dispatcher *Dispatcher
+		runnig     bool
 	}
 )
 
@@ -37,14 +39,16 @@ func NewDispatcher(workerCount int) *Dispatcher {
 		mu:          new(sync.Mutex),
 		workers:     make([]*worker, workerCount),
 		workerCount: workerCount,
+		runnig:      false,
 		jobs:        make(chan func() error, maxJobCount),
-		joberr:      make(chan error, maxJobCount),
+		joberr:      make(chan error),
 		finish:      make(chan struct{}, 1),
 	}
 
 	for i := 0; i < workerCount; i++ {
 		worker := &worker{
 			dispatcher: d,
+			runnig:     false,
 		}
 
 		d.workers[i] = worker
@@ -55,8 +59,14 @@ func NewDispatcher(workerCount int) *Dispatcher {
 
 // Start starts workers
 func (d *Dispatcher) Start() {
+	if d.runnig {
+		return
+	}
+
 	for _, worker := range d.workers {
-		go worker.start()
+		if !worker.runnig {
+			go worker.start()
+		}
 	}
 }
 
@@ -91,6 +101,7 @@ func (d *Dispatcher) UpScale(workerCount int) {
 	for i := 0; i < workerCount; i++ {
 		worker := &worker{
 			dispatcher: d,
+			runnig:     false,
 		}
 
 		d.workerCount++
@@ -109,6 +120,8 @@ func (d *Dispatcher) Finish() <-chan struct{} {
 }
 
 func (w *worker) start() {
+	defer func() { w.runnig = false }()
+	w.runnig = true
 	for job := range w.dispatcher.jobs {
 		go func(err error) {
 			w.dispatcher.joberr <- err
