@@ -2,6 +2,7 @@ package gworker
 
 import (
 	"sync"
+	"sync/atomic"
 )
 
 const (
@@ -13,7 +14,7 @@ type (
 	// Dispatcher managements worker
 	Dispatcher struct {
 		wg          *sync.WaitGroup
-		mu          *sync.Mutex
+		has         int32
 		workers     []*worker
 		workerCount int
 		runnig      bool
@@ -36,7 +37,7 @@ func NewDispatcher(workerCount int) *Dispatcher {
 
 	d := &Dispatcher{
 		wg:          new(sync.WaitGroup),
-		mu:          new(sync.Mutex),
+		has:         0,
 		workers:     make([]*worker, workerCount),
 		workerCount: workerCount,
 		runnig:      false,
@@ -95,8 +96,11 @@ func (d *Dispatcher) UpScale(workerCount int) {
 		workerCount = defaultWorkerCount
 	}
 
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	for {
+		if d.has == 0 && atomic.CompareAndSwapInt32(&d.has, 0, 1) {
+			break
+		}
+	}
 
 	for i := 0; i < workerCount; i++ {
 		worker := &worker{
@@ -107,6 +111,8 @@ func (d *Dispatcher) UpScale(workerCount int) {
 		d.workerCount++
 		go worker.start()
 	}
+
+	d.has = 0
 }
 
 // JobError returns channel for job error
@@ -120,7 +126,6 @@ func (d *Dispatcher) Finish() <-chan struct{} {
 }
 
 func (w *worker) start() {
-	defer func() { w.runnig = false }()
 	w.runnig = true
 	for job := range w.dispatcher.jobs {
 		go func(err error) {
@@ -128,4 +133,5 @@ func (w *worker) start() {
 			w.dispatcher.wg.Done()
 		}(job())
 	}
+	w.runnig = false
 }
