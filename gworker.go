@@ -50,13 +50,11 @@ func NewDispatcher(workerCount int) *Dispatcher {
 		d.workers[i] = worker
 	}
 
-	d.start()
-
 	return d
 }
 
 // Start starts workers
-func (d *Dispatcher) start() {
+func (d *Dispatcher) Start() {
 	for _, worker := range d.workers {
 		go worker.start()
 	}

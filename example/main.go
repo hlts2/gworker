@@ -18,6 +18,7 @@ func main() {
 			return errors.New("errors.New")
 		})
 	}
+	d.Start()
 
 	time.Sleep(time.Second * 10)
 
