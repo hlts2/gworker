@@ -14,11 +14,12 @@ type (
 	// Dispatcher managements worker
 	Dispatcher struct {
 		wg          *sync.WaitGroup
-		sflg        int32
-		scaling     bool
 		workers     []*worker
 		workerCount int
+		sflg        int32
 		runnig      bool
+		scaling     bool
+		observing   bool
 		jobs        chan func() error
 		joberr      chan error
 		finish      chan struct{}
@@ -38,11 +39,12 @@ func NewDispatcher(workerCount int) *Dispatcher {
 
 	d := &Dispatcher{
 		wg:          new(sync.WaitGroup),
-		sflg:        0,
-		scaling:     false,
 		workers:     make([]*worker, workerCount),
 		workerCount: workerCount,
+		sflg:        0,
 		runnig:      false,
+		scaling:     false,
+		observing:   false,
 		jobs:        make(chan func() error, maxJobCount),
 		joberr:      make(chan error),
 		finish:      make(chan struct{}, 1),
@@ -84,11 +86,18 @@ func (d *Dispatcher) Add(job func() error) {
 
 // StartJobObserver monitors jobs. Then, when all the jobs are completed, the notification is transmitted
 func (d *Dispatcher) StartJobObserver() {
+	if d.observing {
+		return
+	}
+
+	d.observing = true
+
 	go func() {
 		for {
 			if len(d.jobs) > 0 {
 				d.wg.Wait()
 				d.finish <- struct{}{}
+				d.observing = false
 				return
 			}
 		}
