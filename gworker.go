@@ -64,6 +64,8 @@ func (d *Dispatcher) Start() {
 		return
 	}
 
+	d.runnig = true
+
 	for _, worker := range d.workers {
 		if !worker.runnig {
 			go worker.start()
