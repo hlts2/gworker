@@ -14,7 +14,7 @@ type (
 	// Dispatcher managements worker
 	Dispatcher struct {
 		wg          *sync.WaitGroup
-		has         int32
+		sflg        int32
 		workers     []*worker
 		workerCount int
 		runnig      bool
@@ -37,7 +37,7 @@ func NewDispatcher(workerCount int) *Dispatcher {
 
 	d := &Dispatcher{
 		wg:          new(sync.WaitGroup),
-		has:         0,
+		sflg:        0,
 		workers:     make([]*worker, workerCount),
 		workerCount: workerCount,
 		runnig:      false,
@@ -59,9 +59,9 @@ func NewDispatcher(workerCount int) *Dispatcher {
 }
 
 // Start starts workers
-func (d *Dispatcher) Start() {
+func (d *Dispatcher) Start() *Dispatcher {
 	if d.runnig {
-		return
+		return d
 	}
 
 	d.runnig = true
@@ -71,6 +71,7 @@ func (d *Dispatcher) Start() {
 			go worker.start()
 		}
 	}
+	return d
 }
 
 // Add adds job
@@ -93,13 +94,13 @@ func (d *Dispatcher) StartJobObserver() {
 }
 
 // UpScale scales up the numer of worker
-func (d *Dispatcher) UpScale(workerCount int) {
+func (d *Dispatcher) UpScale(workerCount int) *Dispatcher {
 	if workerCount < 1 {
 		workerCount = defaultWorkerCount
 	}
 
 	for {
-		if d.has == 0 && atomic.CompareAndSwapInt32(&d.has, 0, 1) {
+		if d.sflg == 0 && atomic.CompareAndSwapInt32(&d.sflg, 0, 1) {
 			break
 		}
 	}
@@ -114,7 +115,8 @@ func (d *Dispatcher) UpScale(workerCount int) {
 		go worker.start()
 	}
 
-	d.has = 0
+	d.sflg = 0
+	return d
 }
 
 // JobError returns channel for job error
