@@ -15,6 +15,7 @@ type (
 	Dispatcher struct {
 		wg          *sync.WaitGroup
 		sflg        int32
+		scaling     bool
 		workers     []*worker
 		workerCount int
 		runnig      bool
@@ -38,6 +39,7 @@ func NewDispatcher(workerCount int) *Dispatcher {
 	d := &Dispatcher{
 		wg:          new(sync.WaitGroup),
 		sflg:        0,
+		scaling:     false,
 		workers:     make([]*worker, workerCount),
 		workerCount: workerCount,
 		runnig:      false,
@@ -93,6 +95,15 @@ func (d *Dispatcher) StartJobObserver() {
 	}()
 }
 
+// GetWorkerCount returns the number of workers
+func (d *Dispatcher) GetWorkerCount() int {
+	for {
+		if !d.scaling {
+			return len(d.workers)
+		}
+	}
+}
+
 // UpScale scales up the numer of worker
 func (d *Dispatcher) UpScale(workerCount int) *Dispatcher {
 	if workerCount < 1 {
@@ -105,6 +116,8 @@ func (d *Dispatcher) UpScale(workerCount int) *Dispatcher {
 		}
 	}
 
+	d.scaling = true
+
 	for i := 0; i < workerCount; i++ {
 		worker := &worker{
 			dispatcher: d,
@@ -116,6 +129,8 @@ func (d *Dispatcher) UpScale(workerCount int) *Dispatcher {
 	}
 
 	d.sflg = 0
+	d.scaling = false
+
 	return d
 }
 
