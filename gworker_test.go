@@ -53,3 +53,18 @@ func TestStart(t *testing.T) {
 		t.Errorf("Starting worker count is wrong. expected: %v, got: %v", workerCount, got)
 	}
 }
+
+// func TestUpScale(t *testing.T) {
+// 	workerCount := 5
+// 	d := NewDispatcher(workerCount)
+// 	d.Start()
+//
+// 	d.UpScale(10)
+//
+// 	upScaledWorkerCount := 15
+//
+// 	got := runtime.NumGoroutine() - 2
+// 	if upScaledWorkerCount != got {
+// 		t.Errorf("Upscale is wrong. expected: %v, got: %v", upScaledWorkerCount, got)
+// 	}
+// }
