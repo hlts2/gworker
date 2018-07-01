@@ -78,6 +78,26 @@ func (d *Dispatcher) Start() *Dispatcher {
 	return d
 }
 
+// Stop stops workers.
+func (d *Dispatcher) Stop() *Dispatcher {
+
+	// When close channel of jobs, worker stops.
+	close(d.jobs)
+
+	tmpJobs := make(chan func() error, maxJobCount)
+	for {
+		if job, ok := <-d.jobs; ok {
+			tmpJobs <- job
+		} else {
+			break
+		}
+	}
+
+	d.jobs = tmpJobs
+
+	return d
+}
+
 // Add adds job
 func (d *Dispatcher) Add(job func() error) {
 	d.wg.Add(1)
