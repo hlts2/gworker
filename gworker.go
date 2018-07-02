@@ -129,7 +129,7 @@ func (d *Dispatcher) StartJobObserver() {
 
 	d.observing = true
 
-	go func() {
+	go func(d *Dispatcher) {
 		for {
 			if len(d.jobs) > 0 {
 				d.wg.Wait()
@@ -138,7 +138,7 @@ func (d *Dispatcher) StartJobObserver() {
 				return
 			}
 		}
-	}()
+	}(d)
 }
 
 // GetWorkerCount returns the number of workers
