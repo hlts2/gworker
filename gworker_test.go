@@ -36,6 +36,31 @@ func TestNewDispatcher(t *testing.T) {
 	}
 }
 
+func TestAdd(t *testing.T) {
+	test := struct {
+		workerCount int
+		jobCount    int
+		expected    int
+	}{
+		workerCount: 5,
+		jobCount:    100,
+		expected:    100,
+	}
+
+	d := NewDispatcher(test.workerCount)
+
+	for i := 0; i < test.jobCount; i++ {
+		d.Add(func() error {
+			return nil
+		})
+	}
+
+	got := len(d.jobs)
+	if test.expected != got {
+		t.Errorf("Add job count is wrong. expected: %v, got: %v", test.expected, got)
+	}
+}
+
 func TestStart(t *testing.T) {
 	test := struct {
 		workerCount int
