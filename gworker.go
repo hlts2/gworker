@@ -87,6 +87,20 @@ func (d *Dispatcher) Stop() *Dispatcher {
 	// When close channel of jobs, worker stops.
 	close(d.jobs)
 
+	for {
+		workersStoped := true
+		for _, worker := range d.workers {
+			if worker.runnig {
+				workersStoped = false
+				break
+			}
+		}
+
+		if workersStoped {
+			break
+		}
+	}
+
 	tmpJobs := make(chan func() error, maxJobCount)
 	for {
 		if job, ok := <-d.jobs; ok {
