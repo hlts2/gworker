@@ -80,6 +80,23 @@ func (d *Dispatcher) Start() *Dispatcher {
 
 // Stop stops workers.
 func (d *Dispatcher) Stop() *Dispatcher {
+	if !d.runnig {
+		return d
+	}
+
+	for {
+		workersRunning := true
+		for _, worker := range d.workers {
+			if !worker.runnig {
+				workersRunning = false
+				break
+			}
+		}
+
+		if workersRunning {
+			break
+		}
+	}
 
 	// When close channel of jobs, worker stops.
 	close(d.jobs)
