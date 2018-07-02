@@ -191,6 +191,9 @@ func (d *Dispatcher) Finish() <-chan struct{} {
 }
 
 func (w *worker) start() {
+	defer func() {
+		w.runnig = false
+	}()
 	w.runnig = true
 	for job := range w.dispatcher.jobs {
 		go func(err error) {
@@ -198,5 +201,4 @@ func (w *worker) start() {
 			w.dispatcher.wg.Done()
 		}(job())
 	}
-	w.runnig = false
 }
