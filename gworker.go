@@ -21,13 +21,14 @@ type (
 		runnig      bool
 		scaling     bool
 		observing   bool
-		stopWorker  chan bool
+		stopWorkers chan bool
 		jobs        chan func() error
 		joberr      chan error
 		finish      chan struct{}
 	}
 
 	worker struct {
+		id         int
 		dispatcher *Dispatcher
 		runnig     bool
 	}
@@ -47,7 +48,7 @@ func NewDispatcher(workerCount int) *Dispatcher {
 		runnig:      false,
 		scaling:     false,
 		observing:   false,
-		stopWorker:  make(chan bool, workerCount),
+		stopWorkers: make(chan bool, workerCount),
 		jobs:        make(chan func() error, maxJobCount),
 		joberr:      make(chan error),
 		finish:      make(chan struct{}, 1),
@@ -55,6 +56,7 @@ func NewDispatcher(workerCount int) *Dispatcher {
 
 	for i := 0; i < workerCount; i++ {
 		worker := &worker{
+			id:         i,
 			dispatcher: d,
 			runnig:     false,
 		}
@@ -74,13 +76,7 @@ func (d *Dispatcher) Start() *Dispatcher {
 	d.runnig = true
 
 	for _, worker := range d.workers {
-		if !worker.runnig {
-			go worker.start()
-
-			// Block until the worker starts up
-			for !worker.runnig {
-			}
-		}
+		go worker.start()
 	}
 	return d
 }
@@ -93,25 +89,11 @@ func (d *Dispatcher) Stop() *Dispatcher {
 
 	for i := 0; i < d.workerCount; i++ {
 		// send stop event of worker
-		d.stopWorker <- true
-	}
-
-	for {
-		workersStoped := true
-		for _, worker := range d.workers {
-			if worker.runnig {
-				workersStoped = false
-				break
-			}
-		}
-
-		if workersStoped {
-			break
-		}
+		d.stopWorkers <- true
 	}
 
 	// delay until goroutine is collected in GC
-	time.Sleep(100 * time.Microsecond)
+	time.Sleep(1 * time.Millisecond)
 
 	d.runnig = false
 
@@ -194,20 +176,14 @@ func (d *Dispatcher) Finish() <-chan struct{} {
 }
 
 func (w *worker) start() {
-	defer func() {
-		w.runnig = false
-	}()
-
-	w.runnig = true
-
 	for {
 		select {
 		case job, _ := <-w.dispatcher.jobs:
-			go func(err error) {
-				w.dispatcher.joberr <- err
-				w.dispatcher.wg.Done()
-			}(job())
-		case _ = <-w.dispatcher.stopWorker:
+			go func(d *Dispatcher, err error) {
+				d.joberr <- err
+				d.wg.Done()
+			}(w.dispatcher, job())
+		case _ = <-w.dispatcher.stopWorkers:
 			return
 		}
 	}
