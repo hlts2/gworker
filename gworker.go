@@ -111,6 +111,7 @@ func (d *Dispatcher) Stop() *Dispatcher {
 	}
 
 	d.jobs = tmpJobs
+	d.runnig = false
 
 	return d
 }
