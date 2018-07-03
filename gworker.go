@@ -76,7 +76,7 @@ func (d *Dispatcher) Start() *Dispatcher {
 	d.runnig = true
 
 	for _, worker := range d.workers {
-		go worker.start()
+		worker.start()
 	}
 	return d
 }
@@ -114,16 +114,15 @@ func (d *Dispatcher) StartJobObserver() {
 
 	d.observing = true
 
-	go func(d *Dispatcher) {
+	go func() {
 		for {
 			if len(d.jobs) > 0 {
 				d.wg.Wait()
 				d.finish <- struct{}{}
-				d.observing = false
 				return
 			}
 		}
-	}(d)
+	}()
 }
 
 // GetWorkerCount returns the number of workers
@@ -176,15 +175,22 @@ func (d *Dispatcher) Finish() <-chan struct{} {
 }
 
 func (w *worker) start() {
-	for {
-		select {
-		case job, _ := <-w.dispatcher.jobs:
-			go func(d *Dispatcher, err error) {
-				d.joberr <- err
-				d.wg.Done()
-			}(w.dispatcher, job())
-		case _ = <-w.dispatcher.stopWorkers:
-			return
+	w.runnig = true
+	go func() {
+		for {
+			select {
+			case job, _ := <-w.dispatcher.jobs:
+				w.run(job)
+			case _ = <-w.dispatcher.stopWorkers:
+				return
+			}
 		}
-	}
+	}()
+}
+
+func (w *worker) run(job func() error) {
+	go func(err error) {
+		w.dispatcher.joberr <- err
+		w.dispatcher.wg.Done()
+	}(job())
 }
