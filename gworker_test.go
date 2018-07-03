@@ -124,3 +124,22 @@ func TestUpScale(t *testing.T) {
 
 	d.Stop()
 }
+
+func TestGetWorkerCount(t *testing.T) {
+	test := struct {
+		workerCount int
+		expected    int
+	}{
+		workerCount: 10,
+		expected:    10,
+	}
+
+	d := NewDispatcher(test.workerCount)
+	d.Start()
+
+	got := d.GetWorkerCount()
+
+	if test.expected != got {
+		t.Errorf("GetWorkerCount is wrong. expected: %v, got: %v", test.expected, got)
+	}
+}
