@@ -3,6 +3,7 @@ package gworker
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 const (
@@ -20,6 +21,7 @@ type (
 		runnig      bool
 		scaling     bool
 		observing   bool
+		stopWorker  chan bool
 		jobs        chan func() error
 		joberr      chan error
 		finish      chan struct{}
@@ -45,6 +47,7 @@ func NewDispatcher(workerCount int) *Dispatcher {
 		runnig:      false,
 		scaling:     false,
 		observing:   false,
+		stopWorker:  make(chan bool, workerCount),
 		jobs:        make(chan func() error, maxJobCount),
 		joberr:      make(chan error),
 		finish:      make(chan struct{}, 1),
@@ -73,49 +76,47 @@ func (d *Dispatcher) Start() *Dispatcher {
 	for _, worker := range d.workers {
 		if !worker.runnig {
 			go worker.start()
+
+			// Block until the worker starts up
+			for !worker.runnig {
+			}
 		}
 	}
 	return d
 }
 
-// // Stop stops workers.
-// func (d *Dispatcher) Stop() *Dispatcher {
-// 	if !d.runnig {
-// 		return d
-// 	}
-//
-// 	// When close channel of jobs, worker stops.
-// 	close(d.jobs)
-//
-// 	for {
-// 		workersStoped := true
-// 		for _, worker := range d.workers {
-// 			if worker.runnig {
-// 				workersStoped = false
-// 				break
-// 			}
-// 		}
-//
-// 		if workersStoped {
-// 			break
-// 		}
-// 	}
-//
-// 	tmpJobs := make(chan func() error, maxJobCount)
-// 	for {
-// 		if job, ok := <-d.jobs; ok {
-// 			tmpJobs <- job
-// 		} else {
-// 			break
-// 		}
-// 	}
-//
-// 	d.jobs = tmpJobs
-// 	d.runnig = false
-//
-// 	return d
-// }
-//
+// Stop stops workers.
+func (d *Dispatcher) Stop() *Dispatcher {
+	if !d.runnig {
+		return d
+	}
+
+	for i := 0; i < d.workerCount; i++ {
+		// send stop event of worker
+		d.stopWorker <- true
+	}
+
+	for {
+		workersStoped := true
+		for _, worker := range d.workers {
+			if worker.runnig {
+				workersStoped = false
+				break
+			}
+		}
+
+		if workersStoped {
+			break
+		}
+	}
+
+	// delay until goroutine is collected in GC
+	time.Sleep(100 * time.Microsecond)
+
+	d.runnig = false
+
+	return d
+}
 
 // Add adds job
 func (d *Dispatcher) Add(job func() error) {
@@ -196,11 +197,18 @@ func (w *worker) start() {
 	defer func() {
 		w.runnig = false
 	}()
+
 	w.runnig = true
-	for job := range w.dispatcher.jobs {
-		go func(err error) {
-			w.dispatcher.joberr <- err
-			w.dispatcher.wg.Done()
-		}(job())
+
+	for {
+		select {
+		case job, _ := <-w.dispatcher.jobs:
+			go func(err error) {
+				w.dispatcher.joberr <- err
+				w.dispatcher.wg.Done()
+			}(job())
+		case _ = <-w.dispatcher.stopWorker:
+			return
+		}
 	}
 }

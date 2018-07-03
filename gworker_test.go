@@ -61,44 +61,33 @@ func TestAdd(t *testing.T) {
 	}
 }
 
-func TestStart(t *testing.T) {
+func TestStartAndStop(t *testing.T) {
 	test := struct {
-		workerCount int
-		expected    int
+		workerCount      int
+		expectedForStart int
+		expectedForStop  int
 	}{
-		workerCount: 10,
-		expected:    10,
+		workerCount:      10,
+		expectedForStart: 10,
+		expectedForStop:  0,
 	}
 
 	d := NewDispatcher(test.workerCount)
 	d.Start()
 
 	got := runtime.NumGoroutine() - 2
-	if test.expected != got {
-		t.Errorf("Starting worker count is wrong. expected: %v, got: %v", test.expected, got)
+	if test.expectedForStart != got {
+		t.Errorf("Starting worker count is wrong. expected: %v, got: %v", test.expectedForStart, got)
+	}
+
+	d.Stop()
+
+	got = runtime.NumGoroutine() - 2
+	if test.expectedForStop != got {
+		t.Errorf("Stop worker count is wrong. expected: %v, got: %v", test.expectedForStop, got)
 	}
 }
 
-// func TestStop(t *testing.T) {
-// 	test := struct {
-// 		workerCount int
-// 		expected    int
-// 	}{
-// 		workerCount: 5,
-// 		expected:    0,
-// 	}
-//
-// 	d := NewDispatcher(test.workerCount)
-// 	d.Start()
-//
-// 	d.Stop()
-//
-// 	got := runtime.NumGoroutine() - 2
-// 	if test.expected != got {
-// 		t.Errorf("Stop worker count is wrong. expected: %v, got: %v", test.expected, got)
-// 	}
-// }
-//
 // func TestUpScale(t *testing.T) {
 // 	test := struct {
 // 		workerCount  int
