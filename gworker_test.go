@@ -1,6 +1,7 @@
 package gworker
 
 import (
+	"errors"
 	"runtime"
 	"testing"
 )
@@ -142,4 +143,31 @@ func TestGetWorkerCount(t *testing.T) {
 	if test.expected != got {
 		t.Errorf("GetWorkerCount is wrong. expected: %v, got: %v", test.expected, got)
 	}
+
+	d.Stop()
+}
+
+func TestJobError(t *testing.T) {
+	test := struct {
+		workerCount int
+		expected    error
+	}{
+		workerCount: 10,
+		expected:    errors.New("gworker error"),
+	}
+
+	d := NewDispatcher(test.workerCount)
+	d.Start()
+
+	d.Add(func() error {
+		return errors.New("gworker error")
+	})
+
+	got := <-d.JobError()
+
+	if test.expected.Error() != got.Error() {
+		t.Errorf("JobError is wrong. expected: %v, got: %v", test.expected, got)
+	}
+
+	d.Stop()
 }
