@@ -16,7 +16,6 @@ type (
 	Dispatcher struct {
 		wg          *sync.WaitGroup
 		workers     []*worker
-		workerCount int
 		sflg        int32
 		runnig      bool
 		scaling     bool
@@ -28,7 +27,6 @@ type (
 	}
 
 	worker struct {
-		id         int
 		dispatcher *Dispatcher
 		runnig     bool
 		stop       chan bool
@@ -44,7 +42,6 @@ func NewDispatcher(workerCount int) *Dispatcher {
 	d := &Dispatcher{
 		wg:          new(sync.WaitGroup),
 		workers:     make([]*worker, workerCount),
-		workerCount: workerCount,
 		sflg:        0,
 		runnig:      false,
 		scaling:     false,
@@ -57,7 +54,6 @@ func NewDispatcher(workerCount int) *Dispatcher {
 
 	for i := 0; i < workerCount; i++ {
 		worker := &worker{
-			id:         i,
 			dispatcher: d,
 			runnig:     false,
 			stop:       make(chan bool),
@@ -155,10 +151,11 @@ func (d *Dispatcher) UpScale(workerCount int) *Dispatcher {
 		worker := &worker{
 			dispatcher: d,
 			runnig:     false,
+			stop:       make(chan bool),
 		}
 
-		d.workerCount++
 		worker.start()
+		d.workers = append(d.workers, worker)
 	}
 
 	d.sflg = 0
