@@ -90,51 +90,89 @@ func TestStartAndStop(t *testing.T) {
 }
 
 func TestUpScale(t *testing.T) {
-	test := struct {
+	tests := []struct {
 		workerCount  int
 		upScaleCount int
 		expected     int
 	}{
-		workerCount:  10,
-		upScaleCount: 5,
-		expected:     15,
+		{
+			workerCount:  10,
+			upScaleCount: 5,
+			expected:     15,
+		},
+		{
+			workerCount:  10,
+			upScaleCount: 1,
+			expected:     11,
+		},
+		{
+			workerCount:  10,
+			upScaleCount: 0,
+			expected:     10,
+		},
+		{
+			workerCount:  10,
+			upScaleCount: -1,
+			expected:     10,
+		},
 	}
 
-	d := NewDispatcher(test.workerCount)
-	d.Start()
+	for i, test := range tests {
+		d := NewDispatcher(test.workerCount)
+		d.Start()
 
-	d.UpScale(test.upScaleCount)
+		d.UpScale(test.upScaleCount)
 
-	got := runtime.NumGoroutine() - 2
-	if test.expected != got {
-		t.Errorf("Upscale is wrong. expected: %v, got: %v", test.upScaleCount, got)
+		got := runtime.NumGoroutine() - 2
+		if test.expected != got {
+			t.Errorf("tests[%d] - Upscale is wrong. expected: %v, got: %v", i, test.upScaleCount, got)
+		}
+
+		d.Stop()
 	}
-
-	d.Stop()
 }
 
 func TestDownScale(t *testing.T) {
-	test := struct {
+	tests := []struct {
 		workerCount    int
 		downScaleCount int
 		expected       int
 	}{
-		workerCount:    10,
-		downScaleCount: 5,
-		expected:       5,
+		{
+			workerCount:    10,
+			downScaleCount: 5,
+			expected:       5,
+		},
+		{
+			workerCount:    10,
+			downScaleCount: 1,
+			expected:       9,
+		},
+		{
+			workerCount:    10,
+			downScaleCount: 0,
+			expected:       10,
+		},
+		{
+			workerCount:    10,
+			downScaleCount: -1,
+			expected:       10,
+		},
 	}
 
-	d := NewDispatcher(test.workerCount)
-	d.Start()
+	for i, test := range tests {
+		d := NewDispatcher(test.workerCount)
+		d.Start()
 
-	d.DownScale(test.downScaleCount)
+		d.DownScale(test.downScaleCount)
 
-	got := runtime.NumGoroutine() - 2
-	if test.expected != got {
-		t.Errorf("Downscale is wrong. expected: %v, got: %v", test.downScaleCount, got)
+		got := runtime.NumGoroutine() - 2
+		if test.expected != got {
+			t.Errorf("tests[%d] - Downscale is wrong. expected: %v, got: %v", i, test.downScaleCount, got)
+		}
+
+		d.Stop()
 	}
-
-	d.Stop()
 }
 
 func TestGetWorkerCount(t *testing.T) {
