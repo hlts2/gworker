@@ -113,6 +113,30 @@ func TestUpScale(t *testing.T) {
 	d.Stop()
 }
 
+func TestDownScale(t *testing.T) {
+	test := struct {
+		workerCount    int
+		downScaleCount int
+		expected       int
+	}{
+		workerCount:    10,
+		downScaleCount: 5,
+		expected:       5,
+	}
+
+	d := NewDispatcher(test.workerCount)
+	d.Start()
+
+	d.DownScale(test.downScaleCount)
+
+	got := runtime.NumGoroutine() - 2
+	if test.expected != got {
+		t.Errorf("Downscale is wrong. expected: %v, got: %v", test.downScaleCount, got)
+	}
+
+	d.Stop()
+}
+
 func TestGetWorkerCount(t *testing.T) {
 	test := struct {
 		workerCount int

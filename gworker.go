@@ -164,6 +164,41 @@ func (d *Dispatcher) UpScale(workerCount int) *Dispatcher {
 	return d
 }
 
+// DownScale scales down the numer of worker
+func (d *Dispatcher) DownScale(workerCount int) *Dispatcher {
+	if !d.runnig {
+		return d
+	}
+
+	if workerCount < 1 || workerCount > len(d.workers) {
+		return d
+	}
+
+	for {
+		if d.sflg == 0 && atomic.CompareAndSwapInt32(&d.sflg, 0, 1) {
+			break
+		}
+	}
+
+	d.scaling = true
+
+	for i := len(d.workers) - 1; i >= len(d.workers)-workerCount; i-- {
+		// send stop event of worker
+		d.workers[i].stop <- true
+		d.workers[i].runnig = false
+	}
+
+	// delay until goroutine is collected in GC
+	time.Sleep(1 * time.Millisecond)
+
+	d.workers = d.workers[:len(d.workers)-workerCount]
+
+	d.sflg = 0
+	d.scaling = false
+
+	return d
+}
+
 // JobError returns channel for job error
 func (d *Dispatcher) JobError() <-chan error {
 	return d.joberr
