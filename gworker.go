@@ -135,6 +135,10 @@ func (d *Dispatcher) GetWorkerCount() int {
 
 // UpScale scales up the numer of worker
 func (d *Dispatcher) UpScale(workerCount int) *Dispatcher {
+	if !d.runnig {
+		return d
+	}
+
 	if workerCount < 1 {
 		return d
 	}
