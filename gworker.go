@@ -48,7 +48,7 @@ func NewDispatcher(workerCount int) *Dispatcher {
 		runnig:      false,
 		scaling:     false,
 		observing:   false,
-		stopWorkers: make(chan bool, workerCount),
+		stopWorkers: make(chan bool),
 		jobs:        make(chan func() error, maxJobCount),
 		joberr:      make(chan error),
 		finish:      make(chan struct{}, 1),
