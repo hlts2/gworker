@@ -31,6 +31,7 @@ type (
 		id         int
 		dispatcher *Dispatcher
 		runnig     bool
+		stop       chan bool
 	}
 )
 
@@ -59,6 +60,7 @@ func NewDispatcher(workerCount int) *Dispatcher {
 			id:         i,
 			dispatcher: d,
 			runnig:     false,
+			stop:       make(chan bool),
 		}
 
 		d.workers[i] = worker
@@ -87,9 +89,10 @@ func (d *Dispatcher) Stop() *Dispatcher {
 		return d
 	}
 
-	for i := 0; i < d.workerCount; i++ {
+	for _, worker := range d.workers {
 		// send stop event of worker
-		d.stopWorkers <- true
+		worker.stop <- true
+		worker.runnig = false
 	}
 
 	// delay until goroutine is collected in GC
@@ -181,7 +184,7 @@ func (w *worker) start() {
 			select {
 			case job, _ := <-w.dispatcher.jobs:
 				w.run(job)
-			case _ = <-w.dispatcher.stopWorkers:
+			case _ = <-w.stop:
 				return
 			}
 		}
