@@ -155,7 +155,7 @@ func (d *Dispatcher) UpScale(workerCount int) *Dispatcher {
 		}
 
 		d.workerCount++
-		go worker.start()
+		worker.start()
 	}
 
 	d.sflg = 0
