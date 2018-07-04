@@ -14,16 +14,16 @@ const (
 type (
 	// Dispatcher managements worker
 	Dispatcher struct {
-		wg          *sync.WaitGroup
-		workers     []*worker
-		sflg        int32
-		runnig      bool
-		scaling     bool
-		observing   bool
-		stopWorkers chan bool
-		jobs        chan func() error
-		joberr      chan error
-		finish      chan struct{}
+		wg        *sync.WaitGroup
+		workers   []*worker
+		sflg      int32
+		runnig    bool
+		scaling   bool
+		observing bool
+		start     chan bool
+		jobs      chan func() error
+		joberr    chan error
+		finish    chan struct{}
 	}
 
 	worker struct {
@@ -40,16 +40,16 @@ func NewDispatcher(workerCount int) *Dispatcher {
 	}
 
 	d := &Dispatcher{
-		wg:          new(sync.WaitGroup),
-		workers:     make([]*worker, workerCount),
-		sflg:        0,
-		runnig:      false,
-		scaling:     false,
-		observing:   false,
-		stopWorkers: make(chan bool),
-		jobs:        make(chan func() error, maxJobCount),
-		joberr:      make(chan error),
-		finish:      make(chan struct{}, 1),
+		wg:        new(sync.WaitGroup),
+		workers:   make([]*worker, workerCount),
+		sflg:      0,
+		runnig:    false,
+		scaling:   false,
+		observing: false,
+		start:     make(chan bool, 1),
+		jobs:      make(chan func() error, maxJobCount),
+		joberr:    make(chan error),
+		finish:    make(chan struct{}, 1),
 	}
 
 	for i := 0; i < workerCount; i++ {
@@ -71,6 +71,7 @@ func (d *Dispatcher) Start() *Dispatcher {
 		return d
 	}
 
+	d.start <- true
 	d.runnig = true
 
 	for _, worker := range d.workers {
@@ -115,11 +116,10 @@ func (d *Dispatcher) StartJobObserver() {
 
 	go func() {
 		for {
-			if len(d.jobs) > 0 {
-				d.wg.Wait()
-				d.finish <- struct{}{}
-				return
-			}
+			<-d.start
+			d.wg.Wait()
+			d.finish <- struct{}{}
+			return
 		}
 	}()
 }

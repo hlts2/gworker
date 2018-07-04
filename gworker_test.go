@@ -220,3 +220,44 @@ func TestJobError(t *testing.T) {
 
 	d.Stop()
 }
+
+func TestFinish(t *testing.T) {
+	test := struct {
+		workerCount int
+		jobCount    int
+		expected    struct{}
+	}{
+		workerCount: 10,
+		jobCount:    10,
+		expected:    struct{}{},
+	}
+
+	d := NewDispatcher(test.workerCount)
+	d.StartJobObserver()
+
+	for i := 0; i < test.jobCount; i++ {
+		d.Add(func() error {
+			return nil
+		})
+	}
+
+	d.Start()
+
+END_LOOP:
+	for {
+		select {
+		case _ = <-d.JobError():
+		case got := <-d.Finish():
+			if test.expected != got {
+				t.Errorf("Finish is wrong: expected: %v, got: %v", test.expected, got)
+			}
+			break END_LOOP
+		}
+	}
+
+	if len(d.jobs) != 0 {
+		t.Errorf("jobs is wrong: expected: %v, got: %v", 0, len(d.jobs))
+	}
+
+	d.Stop()
+}
