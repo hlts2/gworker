@@ -136,7 +136,7 @@ func (d *Dispatcher) GetWorkerCount() int {
 // UpScale scales up the numer of worker
 func (d *Dispatcher) UpScale(workerCount int) *Dispatcher {
 	if workerCount < 1 {
-		workerCount = defaultWorkerCount
+		return d
 	}
 
 	for {
