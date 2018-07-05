@@ -14,8 +14,8 @@ func main() {
 
 	for i := 0; i < 10; i++ {
 		d.Add(func() error {
-			time.Sleep(time.Second * 4)
-			return errors.New("errors.New")
+			time.Sleep(time.Second * 3)
+			return nil
 		})
 	}
 
@@ -23,7 +23,7 @@ func main() {
 
 	for i := 0; i < 10; i++ {
 		d.Add(func() error {
-			time.Sleep(time.Second * 4)
+			time.Sleep(time.Second * 2)
 			return errors.New("errors.New")
 		})
 	}
@@ -32,13 +32,15 @@ func main() {
 
 	d.UpScale(100)
 
-END_LOOP:
+FINIS_ALL_JOB:
 	for {
 		select {
 		case err := <-d.JobError():
 			fmt.Println(err)
 		case _ = <-d.Finish():
-			break END_LOOP
+			break FINIS_ALL_JOB
 		}
 	}
+
+	d.Stop()
 }
