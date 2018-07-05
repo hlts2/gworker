@@ -16,7 +16,7 @@ go get github.com/hlts2/gworker
 
 func main() {
 
-    // Generate 3 workers.
+    // Generates 3 workers
     d := gworker.NewDispatcher(3)
 
     // Register finish monitoring of all jobs.
@@ -25,14 +25,14 @@ func main() {
 
     for i := 0; i < 10; i++ {
 
-        // Add job
+        // Add adds job
         d.Add(func() error {
             time.Sleep(time.Second * 3)
             return nil
         })
     }
 
-    // Starts workers
+    // Start starts workers.
     d.Start()
 
     for i := 0; i < 100; i++ {
@@ -44,7 +44,7 @@ func main() {
 
     time.Sleep(time.Second * 10)
 
-    // Scale up the number of workers
+    // Scale up the number of worker.
     d.UpScale(100)
 
 FINISH_ALL_JOB:
@@ -56,6 +56,10 @@ FINISH_ALL_JOB:
             break FINISH_ALL_JOB
         }
     }
+
+    // Stop stops workers.
+    // In the case of this example, 113 workers are stopped.
+    d.Stop()
 }
 
 ```
