@@ -12,25 +12,23 @@ func main() {
 	d := gworker.NewDispatcher(3)
 	d.StartJobObserver()
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		d.Add(func() error {
-			time.Sleep(time.Second * 3)
+			time.Sleep(time.Second * 1)
 			return nil
 		})
 	}
 
 	d.Start()
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 100; i++ {
 		d.Add(func() error {
 			time.Sleep(time.Second * 2)
 			return errors.New("errors.New")
 		})
 	}
 
-	time.Sleep(time.Second * 10)
-
-	d.UpScale(100)
+	d.UpScale(20)
 
 FINIS_ALL_JOB:
 	for {

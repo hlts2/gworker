@@ -23,11 +23,11 @@ func main() {
     // When all jobs are completed, a notification is sent to `<-d.Finish()`.
     d.StartJobObserver()
 
-    for i := 0; i < 10; i++ {
+    for i := 0; i < 100; i++ {
 
         // Add adds job
         d.Add(func() error {
-            time.Sleep(time.Second * 3)
+            time.Sleep(time.Second * 1)
             return nil
         })
     }
@@ -42,10 +42,8 @@ func main() {
         })
     }
 
-    time.Sleep(time.Second * 10)
-
     // Scale up the number of worker.
-    d.UpScale(100)
+    d.UpScale(20)
 
 FINISH_ALL_JOB:
     for {
@@ -58,7 +56,7 @@ FINISH_ALL_JOB:
     }
 
     // Stop stops workers.
-    // In the case of this example, 113 workers are stopped.
+    // In the case of this example, 23 workers are stopped.
     d.Stop()
 }
 
@@ -66,6 +64,8 @@ FINISH_ALL_JOB:
 
 ## Future
 - [ ] Auto scaling of worker
+
+Automatically upscale when there are many jobs and fewer workers, while scaled down when there are fewer jobs and more workers.
 
 ## Author
 [hlts2](https://github.com/hlts2)
