@@ -64,5 +64,8 @@ FINISH_ALL_JOB:
 
 ```
 
+## Future
+- [ ] Auto scaling of worker
+
 ## Author
 [hlts2](https://github.com/hlts2)
