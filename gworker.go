@@ -115,12 +115,10 @@ func (d *Dispatcher) StartJobObserver() {
 	d.observing = true
 
 	go func() {
-		for {
-			<-d.start
-			d.wg.Wait()
-			d.finish <- struct{}{}
-			return
-		}
+		<-d.start
+		d.wg.Wait()
+		d.finish <- struct{}{}
+		return
 	}()
 }
 
