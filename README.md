@@ -65,7 +65,7 @@ FINISH_ALL_JOB:
 ## Future
 - [ ] Auto scaling of worker
 
-Automatically upscale when there are many jobs and fewer workers, while scaled down when there are fewer jobs and more workers.
+Automatically scaled up when there are many jobs and fewer workers, while scaled down when there are fewer jobs and more workers.
 
 ## Author
 [hlts2](https://github.com/hlts2)
