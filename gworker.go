@@ -201,12 +201,12 @@ func (d *Dispatcher) DownScale(workerCount int) *Dispatcher {
 	return d
 }
 
-// JobError returns channel for job error
+// JobError returns error of job
 func (d *Dispatcher) JobError() <-chan error {
 	return d.joberr
 }
 
-// Finish returns channel when all jobs are finished
+// Finish notifies when all jobs are finished
 func (d *Dispatcher) Finish() <-chan struct{} {
 	return d.finish
 }
