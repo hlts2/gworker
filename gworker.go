@@ -87,12 +87,12 @@ func (d *Dispatcher) Stop() *Dispatcher {
 	}
 
 	for _, worker := range d.workers {
-		// send stop event of worker
+		// sends stop event of worker
 		worker.stop <- true
 		worker.runnig = false
 	}
 
-	// delay until goroutine is collected in GC
+	// delays until goroutine is collected in GC
 	time.Sleep(1 * time.Millisecond)
 
 	d.runnig = false
