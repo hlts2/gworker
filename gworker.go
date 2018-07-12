@@ -12,6 +12,7 @@ const (
 )
 
 type (
+
 	// Dispatcher managements worker
 	Dispatcher struct {
 		wg        *sync.WaitGroup
