@@ -69,3 +69,7 @@ Automatically scaled up when there are many jobs and fewer workers, while scaled
 
 ## Author
 [hlts2](https://github.com/hlts2)
+
+## LICENSE
+gworker released under MIT license, refer [LICENSE](https://github.com/hlts2/gworker/blob/master/LICENSE) file.
+
