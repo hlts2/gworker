@@ -1,6 +1,6 @@
 # gworker
 
-gworker is dispatch worker management library written in golang.
+gworker is simple dispatch worker management library written in golang.
 
 ## Requirement
 Go (>= 1.8)
